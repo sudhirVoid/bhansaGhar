@@ -1,27 +1,20 @@
 import { AppSidebar } from "@/components/app-sidebar"
-import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/data-table"
 import { SectionCards } from "@/components/section-cards"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-
-import data from "./data.json"
 import React from "react"
 
-const Dashboard: React.FC = () => {
+const Menu: React.FC = () => {
   return (
     <SidebarProvider>
       <AppSidebar variant="inset" />
       <SidebarInset>
-        <SiteHeader title="Dashboard"/>
+        <SiteHeader title="Menu"/>
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <SectionCards />
-              <div className="px-4 lg:px-6">
-                <ChartAreaInteractive />
-              </div>
-              <DataTable data={data} />
+              <p>THis is MENU PAGE</p>
             </div>
           </div>
         </div>
@@ -30,4 +23,4 @@ const Dashboard: React.FC = () => {
   )
 }
 
-export default Dashboard;
+export default Menu;

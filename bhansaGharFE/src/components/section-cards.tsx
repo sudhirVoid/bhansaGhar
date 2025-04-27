@@ -1,39 +1,79 @@
-import { TrendingDownIcon, TrendingUpIcon } from "lucide-react"
+import { FlameIcon, StarIcon } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
 import {
   Card,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
 } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+
+interface FoodItem {
+  name: string;
+  category: string;
+  description: string;
+  price: number;
+  isSpicy?: boolean;
+  isPopular?: boolean;
+}
+
+export function FoodItemCard({ item }: { item: FoodItem }) {
+  return (
+    <Card className="max-w-sm shadow-md transition hover:shadow-lg">
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold">
+          {item.name}
+        </CardTitle>
+        <CardDescription className="text-sm text-muted-foreground">
+          Category: {item.category}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">
+          {item.description}
+        </p>
+      </CardContent>
+      <CardFooter className="flex items-center justify-between">
+        <div className="flex gap-2">
+          {item.isSpicy && (
+            <Badge variant="outline" className="text-xs flex items-center gap-1">
+              <FlameIcon className="size-3 text-red-500" />
+              Spicy
+            </Badge>
+          )}
+          {item.isPopular && (
+            <Badge variant="secondary" className="text-xs flex items-center gap-1">
+              <StarIcon className="size-3 text-yellow-400" />
+              Popular
+            </Badge>
+          )}
+        </div>
+        <p className="text-sm font-medium">${item.price.toFixed(2)}</p>
+      </CardFooter>
+    </Card>
+  )
+}
 
 export function SectionCards() {
+  const menuItems: FoodItem[] = [
+    {
+      name: "Grilled Chicken Tacos",
+      category: "Mexican",
+      description: "Soft corn tortillas filled with marinated grilled chicken, topped with spicy salsa and fresh cilantro.",
+      price: 10.99,
+      isSpicy: true,
+      isPopular: true
+    },
+    // Add more menu items here
+  ];
+
   return (
-    <div className="*:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4 grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card lg:px-6">
-      <Card className="@container/card">
-        <CardHeader className="relative">
-          <CardDescription>Total Revenue</CardDescription>
-          <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-            $1,250.00
-          </CardTitle>
-          <div className="absolute right-4 top-4">
-            <Badge variant="outline" className="flex gap-1 rounded-lg text-xs">
-              <TrendingUpIcon className="size-3" />
-              +12.5%
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Trending up this month <TrendingUpIcon className="size-4" />
-          </div>
-          <div className="text-muted-foreground">
-            Visitors for the last 6 months
-          </div>
-        </CardFooter>
-      </Card>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 max-w-7xl mx-auto">
+      {menuItems.map((item, index) => (
+        <FoodItemCard key={index} item={item} />
+      ))}
     </div>
   )
 }

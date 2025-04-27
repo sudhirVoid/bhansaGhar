@@ -1,8 +1,10 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
 import NotFound from "../pages/NotFound";
+import Menu from "@/pages/Menu";
+
 // Mock authentication function
 const isAuthenticated = () => {
     // Replace this with your actual authentication logic
@@ -11,16 +13,20 @@ const isAuthenticated = () => {
 
 const AppRouter: React.FC = () => {
     return (
-        <Router>
-            <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route
-                    path="/dashboard"
-                    element={isAuthenticated() ? <Dashboard /> : <Navigate to="/login" />}
-                />
-                <Route path="*" element={<NotFound />} />
-            </Routes>
-        </Router>
+        <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route
+                path="/dashboard"
+                element={isAuthenticated() ? <Dashboard /> : <Navigate to="/login" />}
+            />
+            <Route
+                path="/menu"
+                element={isAuthenticated() ? <Menu /> : <Navigate to="/login" />}
+            />
+            {/* Add a redirect from root to dashboard */}
+            <Route path="/" element={<Navigate to="/dashboard" />} />
+            <Route path="*" element={<NotFound />} />
+        </Routes>
     );
 };
 
