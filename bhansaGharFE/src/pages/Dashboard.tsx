@@ -7,8 +7,12 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 import data from "./data.json"
 import React from "react"
+import { useAuth } from "@/context/AuthContext"
 
 const Dashboard: React.FC = () => {
+  const { user } = useAuth();
+
+  console.log("User ID:", user?.userId);
   return (
     <SidebarProvider>
       <AppSidebar variant="inset" />

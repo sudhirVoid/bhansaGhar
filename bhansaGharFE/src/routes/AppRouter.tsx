@@ -1,30 +1,40 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "../pages/Login";
-import Dashboard from "../pages/Dashboard";
-import NotFound from "../pages/NotFound";
+import Login from "@/pages/Login";
+import Dashboard from "@/pages/Dashboard";
 import Menu from "@/pages/Menu";
-
-// Mock authentication function
-const isAuthenticated = () => {
-    // Replace this with your actual authentication logic
-    return localStorage.getItem("authToken") !== null;
-};
+import NotFound from "@/pages/NotFound";
+import PrivateRoute from "@/routes/PrivateRoute";
+import PublicRoute from "@/routes/PublicRoute";
 
 const AppRouter: React.FC = () => {
     return (
         <Routes>
-            <Route path="/login" element={<Login />} />
+            <Route
+                path="/login"
+                element={
+                    <PublicRoute>
+                        <Login />
+                    </PublicRoute>
+                }
+            />
             <Route
                 path="/dashboard"
-                element={isAuthenticated() ? <Dashboard /> : <Navigate to="/login" />}
+                element={
+                    <PrivateRoute>
+                        <Dashboard />
+                    </PrivateRoute>
+                }
             />
             <Route
                 path="/menu"
-                element={isAuthenticated() ? <Menu /> : <Navigate to="/login" />}
+                element={
+                    <PrivateRoute>
+                        <Menu />
+                    </PrivateRoute>
+                }
             />
-            {/* Add a redirect from root to dashboard */}
-            <Route path="/" element={<Navigate to="/dashboard" />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<NotFound />} />
         </Routes>
     );

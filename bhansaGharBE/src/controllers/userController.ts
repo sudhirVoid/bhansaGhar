@@ -104,7 +104,7 @@ export class UserController {
             res.status(StatusCodes.OK).json(
                 new ApiResponse(
                     StatusCodes.OK,
-                    { username: user.username, email: user.email, authToken: token },
+                    { userId: user._id, username: user.username, email: user.email, authToken: token },
                     'Login successful'
                 )
             );

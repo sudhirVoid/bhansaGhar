@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useAuth } from "@/context/AuthContext"; 
 
 interface LoginFormInputs {
     username: string;
@@ -17,24 +17,37 @@ export default function LoginForm() {
         formState: { errors },
     } = useForm<LoginFormInputs>();
     const navigate = useNavigate();
+    const { login } = useAuth();
 
-    useEffect(() => {
-        const authToken = localStorage.getItem("authToken");
-        if (authToken) {
-            navigate("/dashboard");
-        }
-    }, [navigate]);
-    
-    const onSubmit = (data: LoginFormInputs) => {
-        console.log(data);
-        // Mock login logic
-        const isAuthenticated = data.username === "admin" && data.password === "password";
-        if (isAuthenticated) {
-            localStorage.setItem("authToken", "dummy-auth-token"); // TODO: Replace with real authentication token
-            // Redirect to the dashboard
-            navigate("/dashboard");
-        } else {
-            alert("Invalid username or password");
+    const onSubmit = async (data: LoginFormInputs) => {
+        try {
+            const response = await fetch('http://localhost:3000/api/v1/user/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+            console.log(result); // for debugging
+
+            if (response.ok && result?.data?.authToken) {
+                const user = {
+                  userId: result.data.userId,
+                  username: result.data.username,
+                  email: result.data.email,
+                };
+                login({ token: result.data.authToken, user }); // <-- pass user object
+                navigate("/dashboard", { replace: true });
+              }
+            else {
+                console.error("Invalid login response");
+                // TODO: handle error UI if needed
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            // TODO: handle error UI if needed
         }
     };
 
