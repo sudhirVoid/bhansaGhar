@@ -16,11 +16,11 @@ import {
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-
-interface Category {
-  id: string
-  label: string
-}
+import {User} from "@/interfaces/User"
+import { ApiResponse } from "@/interfaces/ApiResponse"
+import { useEffect } from "react"
+import { FoodCategory } from "@/interfaces/MenuInterfaces"
+import { addCategory, getCategories } from "@/services/menu"
 
 interface FormValues {
   title: string
@@ -33,26 +33,53 @@ interface FormValues {
 }
 
 // Mock initial categories
-const initialCategories: Category[] = [
-  { id: "all", label: "All Items" },
-  { id: "mexican", label: "Mexican" },
-  { id: "indian", label: "Indian" },
-  { id: "italian", label: "Italian" },
-  { id: "chinese", label: "Chinese" },
-]
+const initialCategories: FoodCategory[] = []
 
-// Mock API call
-const mockAddCategoryAPI = (name: string): Promise<Category> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ id: name.toLowerCase().replace(/\s+/g, "-"), label: name.trim() })
-    }, 1000)
-  })
-}
+export const API_BASE_URL = 'http://localhost:3000/api/v1';
+
+// export async function addCategory(categoryName: string, userId: string) {
+//   const response = await fetch(`${API_BASE_URL}/menu/addCategory`, {
+//     method: 'POST',
+//     headers: {
+//       'Content-Type': 'application/json',
+//       // Add Authorization header if you're using JWT
+//       'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+//     },
+//     body: JSON.stringify({
+//       categoryName,
+//       userId
+//     })
+//   });
+
+
+//   return await response.json();
+// }
+
+// export async function getCategories(): Promise<ApiResponse> {
+//   const token = localStorage.getItem('authToken');
+//   if (!token) {
+//     throw new Error('Authentication token not found. Please login again.');
+//   }
+
+//   const response = await fetch(`${API_BASE_URL}/menu/getCategories`, {
+//     method: 'GET',
+//     headers: {
+//       'Authorization': `Bearer ${token}`,
+//       'Content-Type': 'application/json'
+//     }
+//   });
+
+//   if (!response.ok) {
+//     const error = await response.json();
+//     throw new Error(error.message || 'Failed to fetch categories');
+//   }
+
+//   return response.json();
+// }
 
 export default function Menu() {
   const [activeCategory, setActiveCategory] = useState<string>("all")
-  const [categories, setCategories] = useState<Category[]>(initialCategories)
+  const [categories, setCategories] = useState<FoodCategory[]>(initialCategories)
   const [loadingCategory, setLoadingCategory] = useState(false)
   const [categoryError, setCategoryError] = useState<string>("")
 
@@ -75,6 +102,24 @@ export default function Menu() {
     },
   })
 
+  async function fetchCategories() {
+    try {
+      const response: ApiResponse = await getCategories();
+      console.log("Fetched Categories:", response)
+      if (response.success) {
+
+        setCategories(response.data);
+      }
+    } catch (error: any) {
+      console.error("Failed to fetch categories:", error);
+      setCategoryError(error.message);
+    }
+  }
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
   const watchNewCategory = watch("newCategory")
 
   const onSubmit = (data: FormValues) => {
@@ -83,13 +128,13 @@ export default function Menu() {
   }
 
   const handleAddCategory = async () => {
-    const trimmedName = watchNewCategory.trim()
-    setCategoryError("") // clear previous error
+    const categoryToAdd = watchNewCategory.trim()
+    setCategoryError("") 
 
-    if (!trimmedName) return
+    if (!categoryToAdd) return
 
     const exists = categories.some(
-      (cat) => cat.label.toLowerCase() === trimmedName.toLowerCase()
+      (cat) => cat.categoryName.toLowerCase() === categoryToAdd.toLowerCase()
     )
 
     if (exists) {
@@ -99,16 +144,40 @@ export default function Menu() {
 
     try {
       setLoadingCategory(true)
-      const newCat = await mockAddCategoryAPI(trimmedName)
-      setCategories((prev) => [...prev, newCat])
-      setValue("newCategory", "") // Clear input
-    } catch (error) {
+      // Get user from localStorage
+      const userString = localStorage.getItem('user')
+      if (!userString) {
+
+        throw new Error('User not found. Please login again.')
+      }
+      
+      const user: User = JSON.parse(userString)
+      const response: ApiResponse = await addCategory(categoryToAdd, user.userId)
+
+      if(!response.success) {
+        switch (response.statusCode) {
+          case 409:
+            setCategoryError("Category already exists!")
+        }
+      }
+      else{ 
+        setCategories((prev) => [
+          ...prev,
+          {
+            categoryId: response.data._id,
+            categoryName: response.data.categoryName,
+          },
+        ])
+      }
+    
+      setValue("newCategory", "")
+    } catch (error: any) {
       console.error("Failed to add category", error)
-      setCategoryError("Failed to add category. Please try again.")
+      setCategoryError(error.message || "Failed to add category. Please try again.")
     } finally {
       setLoadingCategory(false)
     }
-  }
+}
 
   return (
     <SidebarProvider>
@@ -128,11 +197,11 @@ export default function Menu() {
                   <TabsList className="flex flex-wrap h-auto gap-2 bg-muted/50 p-1">
                     {categories.map((category) => (
                       <TabsTrigger
-                        key={category.id}
-                        value={category.id}
+                        key={category.categoryId}
+                        value={category.categoryId}
                         className="data-[state=active]:bg-background"
                       >
-                        {category.label}
+                        {category.categoryName}
                       </TabsTrigger>
                     ))}
                     <TabsTrigger value="add-new" className="data-[state=active]:bg-background">
@@ -145,7 +214,7 @@ export default function Menu() {
                   </TabsContent>
 
                   {categories.map((cat) => (
-                    <TabsContent key={cat.id} value={cat.id}>
+                    <TabsContent key={cat.categoryId} value={cat.categoryName}>
                       <SectionCards />
                     </TabsContent>
                   ))}
@@ -172,8 +241,8 @@ export default function Menu() {
                             </SelectTrigger>
                             <SelectContent>
                               {categories.map((cat) => (
-                                <SelectItem key={cat.id} value={cat.id}>
-                                  {cat.label}
+                                <SelectItem key={cat.categoryId} value={cat.categoryId}>
+                                  {cat.categoryName}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -185,13 +254,20 @@ export default function Menu() {
                             id="new-category"
                             placeholder="Add new category"
                             {...register("newCategory")}
-                          />
+                          />                         
                           <Button
                             type="button"
                             onClick={handleAddCategory}
                             disabled={!watchNewCategory.trim() || loadingCategory}
                           >
-                            {loadingCategory ? "Adding..." : "Add Category"}
+                            {loadingCategory ? (
+                              <>
+                                <span className="animate-spin mr-2">⌛</span>
+                                Adding...
+                              </>
+                            ) : (
+                              "Add Category"
+                            )}
                           </Button>
                           {categoryError && (
                             <p className="text-red-500 text-xs">{categoryError}</p>

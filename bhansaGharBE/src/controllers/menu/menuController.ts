@@ -21,6 +21,11 @@ interface CreateFoodItemBody {
     }[];
 }
 
+interface FoodCategory {
+    categoryName: any;
+    categoryId: any;
+}
+
 class MenuController {
     // POST: Create a new category (admin access assumed handled in middleware)
     public async addCategory(req: Request, res: Response): Promise<Response> {
@@ -66,11 +71,15 @@ class MenuController {
         try {
             // TODO : if we make it multitenant then we can make it filter by tenantId
             const categories = await FoodCategory.find().collation({ locale: 'en', strength: 2 });
+            const transformedCategories: FoodCategory[] = categories.map((category) => ({
+                categoryId: category._id,
+                categoryName: category.categoryName
+            }));
 
             return res.status(StatusCodes.OK).json(
                 new ApiResponse(
                     StatusCodes.OK,
-                    categories,
+                    transformedCategories,
                     'Categories fetched successfully'
                 )
             );
