@@ -5,7 +5,7 @@ interface UserAttributes extends Document {
     username: string;
     email: string;
     password: string;
-    role: [USER_ROLES.ADMIN, USER_ROLES.WAITER, USER_ROLES.CHEF];
+    role: USER_ROLES.ADMIN | USER_ROLES.WAITER | USER_ROLES.CHEF;
     refreshToken?: string;
     createdAt?: Date;
     updatedAt?: Date;

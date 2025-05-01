@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { UserController } from '../controllers/userController';
 import { createUserRequestSchema, userLoginRequestSchema } from '../schemas/userSchema';
-import { validateSchema } from '../middlewares/payloadValidator';
+import { postRequestPayloadValidator } from '../middlewares/requestValidators';
 const userRouter = Router();
 const userController = new UserController();
 
 // Register routes
-userRouter.post('/create', validateSchema(createUserRequestSchema), userController.createUser);
-userRouter.post('/login', validateSchema(userLoginRequestSchema), userController.loginUser);
+userRouter.post('/create', postRequestPayloadValidator(createUserRequestSchema), userController.createUser);
+userRouter.post('/login', postRequestPayloadValidator(userLoginRequestSchema), userController.loginUser);
 
 export { userRouter };
