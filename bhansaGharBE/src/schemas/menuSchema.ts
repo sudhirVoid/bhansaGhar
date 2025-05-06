@@ -18,8 +18,11 @@ export const getFoodCategorySchema = z.object({
 export const addFoodItemSchema = z.object({
   foodName: z.string().min(1, 'Food name is required'),
   price: z.number().positive('Price must be a positive number'),
-  categoryId: z.string().refine(val => mongoose.Types.ObjectId.isValid(val), {
-    message: 'Invalid category ID',
+  category: z.object({
+    categoryId: z.string().refine(val => mongoose.Types.ObjectId.isValid(val), {
+      message: 'Invalid category ID',
+    }),
+    categoryName: z.string().min(1, 'Category name is required')
   }),
   userId: z.string().refine(val => mongoose.Types.ObjectId.isValid(val), {
     message: 'Invalid user ID',
@@ -29,7 +32,7 @@ export const addFoodItemSchema = z.object({
   isAvailable: z.boolean().optional().default(true),
 
   variants: z.array(z.object({
-    name: z.string(), // e.g., "Small", "Medium", "Spicy"
+    name: z.string(),
     additionalPrice: z.number().nonnegative(),
     available: z.boolean().default(true),
   })).optional()

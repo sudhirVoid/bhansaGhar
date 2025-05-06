@@ -5,7 +5,7 @@ export interface FoodCategory {
 
 export interface FoodItemPayload {
     foodName: string;
-    categoryId: string;
+    category: FoodCategory;
     userId: string;
     price: number;
     description?: string;

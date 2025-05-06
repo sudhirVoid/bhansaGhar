@@ -8,7 +8,10 @@ import FoodItem from '../../db/models/foodItem';
 // Define the request body type
 interface CreateFoodItemBody {
     foodName: string;
-    categoryId: string;
+    category: {
+        categoryName: string;
+        categoryId: string;
+    };
     userId: string;
     price: number;
     description?: string;
@@ -106,7 +109,11 @@ class MenuController {
             foodItemData.isAvailable ??= true;
             foodItemData.variants ??= [];
 
-            const newFoodItem = new FoodItem(foodItemData);
+            const { category, ...rest } = foodItemData;
+            const newFoodItem = new FoodItem({
+                ...rest,
+                categoryId: category.categoryId
+            });
             await newFoodItem.save();
 
             return res.status(StatusCodes.CREATED).json(

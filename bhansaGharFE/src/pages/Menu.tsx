@@ -19,7 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { User } from "@/interfaces/User";
 import { ApiResponse } from "@/interfaces/ApiResponse";
 import { useEffect } from "react";
-import { FoodCategory } from "@/interfaces/MenuInterfaces";
+import { FoodCategory, FoodItemPayload } from "@/interfaces/MenuInterfaces";
 import { addCategory, addFoodItem, getCategories } from "@/services/menu";
 import { toast } from "sonner";
 
@@ -107,10 +107,18 @@ export default function Menu() {
       if (data.popular) tags.push("popular");
 
       // Prepare the payload
-      const payload = {
+      const selectedCategory = categories.find(cat => cat.categoryId === data.category);
+      if (!selectedCategory) {
+        throw new Error("Selected category not found");
+      }
+
+      const payload: FoodItemPayload = {
         foodName: data.title,
         price: data.price,
-        categoryId: data.category,
+        category: { 
+          categoryId: data.category,
+          categoryName: selectedCategory.categoryName 
+        },
         userId: user.userId,
         description: data.info || "",
         tags,
