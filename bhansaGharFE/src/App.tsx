@@ -1,14 +1,15 @@
-import React from "react";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import AppRouter from "@/routes/AppRouter";
+import { Toaster } from "sonner";
 
 function App() {
     return (
         <AuthProvider>
             <BrowserRouter>
                 <AppRouter />
-            </BrowserRouter>
+                <Toaster position="top-right" richColors />
+            </BrowserRouter>            
         </AuthProvider>
     );
 }

@@ -1,87 +1,49 @@
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { AppSidebar } from "@/components/app-sidebar"
-import { SectionCards } from "@/components/section-cards"
-import { SiteHeader } from "@/components/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SectionCards } from "@/components/section-cards";
+import { SiteHeader } from "@/components/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import {User} from "@/interfaces/User"
-import { ApiResponse } from "@/interfaces/ApiResponse"
-import { useEffect } from "react"
-import { FoodCategory } from "@/interfaces/MenuInterfaces"
-import { addCategory, getCategories } from "@/services/menu"
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { User } from "@/interfaces/User";
+import { ApiResponse } from "@/interfaces/ApiResponse";
+import { useEffect } from "react";
+import { FoodCategory } from "@/interfaces/MenuInterfaces";
+import { addCategory, addFoodItem, getCategories } from "@/services/menu";
+import { toast } from "sonner";
 
 interface FormValues {
-  title: string
-  category: string
-  info: string
-  price: number
-  spicy: boolean
-  popular: boolean
-  newCategory: string
+  title: string;
+  category: string;
+  info: string;
+  price: number;
+  spicy: boolean;
+  popular: boolean;
+  newCategory: string;
 }
 
 // Mock initial categories
-const initialCategories: FoodCategory[] = []
+const initialCategories: FoodCategory[] = [];
 
-export const API_BASE_URL = 'http://localhost:3000/api/v1';
-
-// export async function addCategory(categoryName: string, userId: string) {
-//   const response = await fetch(`${API_BASE_URL}/menu/addCategory`, {
-//     method: 'POST',
-//     headers: {
-//       'Content-Type': 'application/json',
-//       // Add Authorization header if you're using JWT
-//       'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-//     },
-//     body: JSON.stringify({
-//       categoryName,
-//       userId
-//     })
-//   });
-
-
-//   return await response.json();
-// }
-
-// export async function getCategories(): Promise<ApiResponse> {
-//   const token = localStorage.getItem('authToken');
-//   if (!token) {
-//     throw new Error('Authentication token not found. Please login again.');
-//   }
-
-//   const response = await fetch(`${API_BASE_URL}/menu/getCategories`, {
-//     method: 'GET',
-//     headers: {
-//       'Authorization': `Bearer ${token}`,
-//       'Content-Type': 'application/json'
-//     }
-//   });
-
-//   if (!response.ok) {
-//     const error = await response.json();
-//     throw new Error(error.message || 'Failed to fetch categories');
-//   }
-
-//   return response.json();
-// }
+export const API_BASE_URL = "http://localhost:3000/api/v1";
 
 export default function Menu() {
-  const [activeCategory, setActiveCategory] = useState<string>("all")
-  const [categories, setCategories] = useState<FoodCategory[]>(initialCategories)
-  const [loadingCategory, setLoadingCategory] = useState(false)
-  const [categoryError, setCategoryError] = useState<string>("")
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [categories, setCategories] =
+    useState<FoodCategory[]>(initialCategories);
+  const [loadingCategory, setLoadingCategory] = useState(false);
+  const [categoryError, setCategoryError] = useState<string>("");
 
   const {
     register,
@@ -100,14 +62,13 @@ export default function Menu() {
       popular: false,
       newCategory: "",
     },
-  })
+  });
 
   async function fetchCategories() {
     try {
       const response: ApiResponse = await getCategories();
-      console.log("Fetched Categories:", response)
+      console.log("Fetched Categories:", response);
       if (response.success) {
-
         setCategories(response.data);
       }
     } catch (error: any) {
@@ -120,64 +81,115 @@ export default function Menu() {
     fetchCategories();
   }, []);
 
-  const watchNewCategory = watch("newCategory")
+  const watchNewCategory = watch("newCategory");
 
-  const onSubmit = (data: FormValues) => {
-    console.log("Item Submitted:", data)
-    reset()
-  }
+  // Add state for loading and error
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string>("");
+
+  const onSubmit = async (data: FormValues) => {
+    try {
+      setSubmitting(true);
+      setSubmitError("");
+
+      // Get user from localStorage
+      const userString = localStorage.getItem("user");
+      if (!userString) {
+        toast.error("User not found. Please login again.");
+        return;
+      }
+
+      const user: User = JSON.parse(userString);
+
+      // Prepare tags array
+      const tags: string[] = [];
+      if (data.spicy) tags.push("spicy");
+      if (data.popular) tags.push("popular");
+
+      // Prepare the payload
+      const payload = {
+        foodName: data.title,
+        price: data.price,
+        categoryId: data.category,
+        userId: user.userId,
+        description: data.info || "",
+        tags,
+        variants: [{ name: "Regular", additionalPrice: 0 }],
+      };
+
+      const response = await addFoodItem(payload);
+
+      if (response.success) {
+        toast.success("Food item added successfully", {
+          description: `${data.title} has been added to the menu.`,
+        });
+        reset();
+        // Optionally refresh the menu items
+      }
+    } catch (error: any) {
+      console.error("Failed to add food item:", error);
+      toast.error("Failed to add food item", {
+        description: error.message || "Please try again",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleAddCategory = async () => {
-    const categoryToAdd = watchNewCategory.trim()
-    setCategoryError("") 
+    const categoryToAdd = watchNewCategory.trim();
+    setCategoryError("");
 
-    if (!categoryToAdd) return
+    if (!categoryToAdd) return;
 
     const exists = categories.some(
       (cat) => cat.categoryName.toLowerCase() === categoryToAdd.toLowerCase()
-    )
+    );
 
     if (exists) {
-      setCategoryError("Category already exists!")
-      return
+      setCategoryError("Category already exists!");
+      return;
     }
 
     try {
-      setLoadingCategory(true)
+      setLoadingCategory(true);
       // Get user from localStorage
-      const userString = localStorage.getItem('user')
+      const userString = localStorage.getItem("user");
       if (!userString) {
-
-        throw new Error('User not found. Please login again.')
+        throw new Error("User not found. Please login again.");
       }
-      
-      const user: User = JSON.parse(userString)
-      const response: ApiResponse = await addCategory(categoryToAdd, user.userId)
 
-      if(!response.success) {
+      const user: User = JSON.parse(userString);
+      const response: ApiResponse = await addCategory(
+        categoryToAdd,
+        user.userId
+      );
+
+      if (!response.success) {
         switch (response.statusCode) {
           case 409:
-            setCategoryError("Category already exists!")
+            setCategoryError("Category already exists!");
         }
-      }
-      else{ 
+      } else {
         setCategories((prev) => [
           ...prev,
           {
             categoryId: response.data._id,
             categoryName: response.data.categoryName,
           },
-        ])
+        ]);
       }
-    
-      setValue("newCategory", "")
+
+      setValue("newCategory", "");
     } catch (error: any) {
-      console.error("Failed to add category", error)
-      setCategoryError(error.message || "Failed to add category. Please try again.")
+      console.error("Failed to add category", error);
+      setCategoryError(
+        error.message || "Failed to add category. Please try again."
+      );
     } finally {
-      setLoadingCategory(false)
+      setLoadingCategory(false);
     }
-}
+  };
 
   return (
     <SidebarProvider>
@@ -204,7 +216,10 @@ export default function Menu() {
                         {category.categoryName}
                       </TabsTrigger>
                     ))}
-                    <TabsTrigger value="add-new" className="data-[state=active]:bg-background">
+                    <TabsTrigger
+                      value="add-new"
+                      className="data-[state=active]:bg-background"
+                    >
                       Add New Item
                     </TabsTrigger>
                   </TabsList>
@@ -220,28 +235,48 @@ export default function Menu() {
                   ))}
 
                   {/* Add New Item Form */}
-                  <TabsContent value="add-new" className="px-2 md:px-6 pt-6 space-y-6">
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  <TabsContent
+                    value="add-new"
+                    className="px-2 md:px-6 pt-6 space-y-6"
+                  >
+                    <form
+                      onSubmit={handleSubmit(onSubmit)}
+                      className="space-y-4"
+                    >
                       <div>
-                        <Label htmlFor="title">Title</Label>
+                        <Label htmlFor="title" className="py-2">
+                          Title
+                        </Label>
                         <Input
                           id="title"
                           {...register("title", { required: true })}
                           placeholder="e.g. Chicken Tikka Masala"
                         />
-                        {errors.title && <p className="text-red-500 text-xs">Title is required</p>}
+                        {errors.title && (
+                          <p className="text-red-500 text-xs">
+                            Title is required
+                          </p>
+                        )}
                       </div>
-
                       <div className="flex items-center gap-4">
                         <div className="w-2/3">
-                          <Label htmlFor="category">Category</Label>
-                          <Select onValueChange={(value) => setValue("category", value)}>
+                          <Label htmlFor="category" className="py-2">
+                            Category
+                          </Label>
+                          <Select
+                            onValueChange={(value) =>
+                              setValue("category", value)
+                            }
+                          >
                             <SelectTrigger id="category">
                               <SelectValue placeholder="Select category" />
                             </SelectTrigger>
                             <SelectContent>
                               {categories.map((cat) => (
-                                <SelectItem key={cat.categoryId} value={cat.categoryId}>
+                                <SelectItem
+                                  key={cat.categoryId}
+                                  value={cat.categoryId}
+                                >
                                   {cat.categoryName}
                                 </SelectItem>
                               ))}
@@ -254,11 +289,13 @@ export default function Menu() {
                             id="new-category"
                             placeholder="Add new category"
                             {...register("newCategory")}
-                          />                         
+                          />
                           <Button
                             type="button"
                             onClick={handleAddCategory}
-                            disabled={!watchNewCategory.trim() || loadingCategory}
+                            disabled={
+                              !watchNewCategory.trim() || loadingCategory
+                            }
                           >
                             {loadingCategory ? (
                               <>
@@ -270,39 +307,49 @@ export default function Menu() {
                             )}
                           </Button>
                           {categoryError && (
-                            <p className="text-red-500 text-xs">{categoryError}</p>
+                            <p className="text-red-500 text-xs">
+                              {categoryError}
+                            </p>
                           )}
                         </div>
                       </div>
-
                       <div>
-                        <Label htmlFor="info">Additional Info</Label>
+                        <Label htmlFor="info" className="py-2">
+                          Additional Info
+                        </Label>
                         <Input
                           id="info"
                           {...register("info")}
                           placeholder="e.g. Served with garlic naan"
                         />
                       </div>
-
                       <div>
-                        <Label htmlFor="price">Price</Label>
+                        <Label htmlFor="price" className="py-2">
+                          Price
+                        </Label>
                         <Input
                           id="price"
                           type="number"
-                          {...register("price", { required: true, valueAsNumber: true })}
+                          {...register("price", {
+                            required: true,
+                            valueAsNumber: true,
+                          })}
                           placeholder="e.g. 12.99"
                         />
                         {errors.price && (
-                          <p className="text-red-500 text-xs">Price is required</p>
+                          <p className="text-red-500 text-xs">
+                            Price is required
+                          </p>
                         )}
                       </div>
-
                       <div className="flex gap-6">
                         <div className="flex items-center space-x-2">
                           <Checkbox
                             id="spicy"
                             checked={watch("spicy")}
-                            onCheckedChange={(checked) => setValue("spicy", !!checked)}
+                            onCheckedChange={(checked) =>
+                              setValue("spicy", !!checked)
+                            }
                           />
                           <Label htmlFor="spicy">Spicy</Label>
                         </div>
@@ -310,13 +357,30 @@ export default function Menu() {
                           <Checkbox
                             id="popular"
                             checked={watch("popular")}
-                            onCheckedChange={(checked) => setValue("popular", !!checked)}
+                            onCheckedChange={(checked) =>
+                              setValue("popular", !!checked)
+                            }
                           />
                           <Label htmlFor="popular">Popular</Label>
                         </div>
                       </div>
-
-                      <Button type="submit">Add Item</Button>
+                      <Button
+                        type="submit"
+                        disabled={submitting}
+                        className="w-full"
+                      >
+                        {submitting ? (
+                          <>
+                            <span className="animate-spin mr-2">⌛</span>
+                            Adding...
+                          </>
+                        ) : (
+                          "Add Item"
+                        )}
+                      </Button>
+                      {submitError && (
+                        <p className="text-red-500 text-sm">{submitError}</p>
+                      )}
                     </form>
                   </TabsContent>
                 </Tabs>
@@ -326,5 +390,5 @@ export default function Menu() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }
