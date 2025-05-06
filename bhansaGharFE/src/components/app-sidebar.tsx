@@ -15,6 +15,7 @@ import {
   ListIcon,
   SearchIcon,
   SettingsIcon,
+  Table,
   UsersIcon,
 } from "lucide-react"
 
@@ -50,9 +51,9 @@ const data = {
       icon: Book,
     },
     {
-      title: "Analytics",
-      url: "#",
-      icon: BarChartIcon,
+      title: "Table",
+      url: "/table",
+      icon: Table,
     },
     {
       title: "Projects",

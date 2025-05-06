@@ -6,6 +6,7 @@ import Menu from "@/pages/Menu";
 import NotFound from "@/pages/NotFound";
 import PrivateRoute from "@/routes/PrivateRoute";
 import PublicRoute from "@/routes/PublicRoute";
+import ResturantTable from "@/pages/ResturantTable";
 
 const AppRouter: React.FC = () => {
     return (
@@ -31,6 +32,14 @@ const AppRouter: React.FC = () => {
                 element={
                     <PrivateRoute>
                         <Menu />
+                    </PrivateRoute>
+                }
+            />
+            <Route
+                path="/table"
+                element={
+                    <PrivateRoute>
+                        <ResturantTable />
                     </PrivateRoute>
                 }
             />

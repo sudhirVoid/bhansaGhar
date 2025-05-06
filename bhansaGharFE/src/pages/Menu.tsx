@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { AppSidebar } from "@/components/app-sidebar";
-import { SectionCards } from "@/components/section-cards";
+import { FoodItemCard } from "@/components/section-cards";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -39,7 +39,7 @@ const initialCategories: FoodCategory[] = [];
 export const API_BASE_URL = "http://localhost:3000/api/v1";
 
 export default function Menu() {
-  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [activeCategories, setActiveCategories] = useState<string[]>(["all"]);
   const [categories, setCategories] =
     useState<FoodCategory[]>(initialCategories);
   const [loadingCategory, setLoadingCategory] = useState(false);
@@ -82,7 +82,7 @@ export default function Menu() {
     try {
       const response: ApiResponse = await getFoodItems();
       console.log(response.data);
-      if(response.success) {
+      if (response.success) {
         setFoodItems(response.data);
         console.log("Fetched Food Items:", foodItems);
       }
@@ -134,9 +134,9 @@ export default function Menu() {
       const payload: FoodItem = {
         foodName: data.title,
         price: data.price,
-        category: { 
+        category: {
           categoryId: data.category,
-          categoryName: selectedCategory.categoryName 
+          categoryName: selectedCategory.categoryName
         },
         userId: user.userId,
         description: data.info || "",
@@ -211,7 +211,7 @@ export default function Menu() {
             categoryName: response.data.categoryName,
           },
         ]);
-        
+
       }
 
       setValue("newCategory", "");
@@ -235,46 +235,79 @@ export default function Menu() {
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <div className="px-6">
                 <Tabs
-                  defaultValue="all"
-                  value={activeCategory}
-                  onValueChange={setActiveCategory}
+                  defaultValue="menu-items"
                   className="w-full"
                 >
-                  <TabsList className="flex flex-wrap h-auto gap-2 bg-muted/50 p-1">
-                  <TabsTrigger
-                      value="all-items"
-                      className="data-[state=active]:bg-background"
-                    >
-                      All Items
+                  <TabsList className="flex h-10 gap-2 bg-muted/50 p-1">
+                    <TabsTrigger value="menu-items">
+                      Menu Items
                     </TabsTrigger>
-                    {categories.map((category) => (
-                      <TabsTrigger
-                        key={category.categoryId}
-                        value={category.categoryId}
-                        className="data-[state=active]:bg-background"
-                      >
-                        {category.categoryName}
-                      </TabsTrigger>
-                    ))}
-                    <TabsTrigger
-                      value="add-new"
-                      className="data-[state=active]:bg-background"
-                    >
+                    <TabsTrigger value="add-new">
                       Add New Item
                     </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="all">
-                    <SectionCards />
+                  <TabsContent value="menu-items" className="mt-6">
+                    <div className="flex gap-6">
+                      {/* Categories Sidebar */}
+                      <div className="w-64 space-y-4 border-r">
+                        <h3 className="font-semibold mb-4">Categories</h3>
+                        <div className="space-y-2 overflow-y-auto max-h-[400px] pr-2">
+
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="all"
+                              checked={activeCategories.includes("all")}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setActiveCategories(["all"]);
+                                } else {
+                                  setActiveCategories([]);
+                                }
+                              }}
+                            />
+
+                            <Label htmlFor="all">All Items</Label>
+                          </div>
+                          {categories.map((category) => (
+                            <div key={category.categoryId} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={category.categoryId}
+                                checked={activeCategories.includes(category.categoryId)}
+                                onCheckedChange={(checked) => {
+                                  const updated = checked
+                                    ? [...activeCategories.filter(c => c !== "all"), category.categoryId]
+                                    : activeCategories.filter((id) => id !== category.categoryId);
+                                  setActiveCategories(updated.length ? updated : ["all"]);
+                                }}
+                              />
+                              <Label htmlFor={category.categoryId}>
+                                {category.categoryName}
+                              </Label>
+                            </div>
+                          ))}
+
+                        </div>
+                      </div>
+
+                      {/* Food Items Grid */}
+                      <div className="flex-1">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {foodItems
+                            .filter(item =>
+                              activeCategories.includes(item.category.categoryId)
+                            ||
+                              activeCategories.includes("all")
+                            )
+                            .map((item, index) => (
+                              <FoodItemCard key={index} item={item} />
+                            ))}
+                        </div>
+                      </div>
+                    </div>
                   </TabsContent>
 
-                  {categories.map((cat) => (
-                    <TabsContent key={cat.categoryId} value={cat.categoryName}>
-                      <SectionCards />
-                    </TabsContent>
-                  ))}
-
-                  {/* Add New Item Form */}
+                  {/* Keep your existing Add New Item form */}
                   <TabsContent
                     value="add-new"
                     className="px-2 md:px-6 pt-6 space-y-6"
