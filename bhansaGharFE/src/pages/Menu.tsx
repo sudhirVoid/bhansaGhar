@@ -19,8 +19,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { User } from "@/interfaces/User";
 import { ApiResponse } from "@/interfaces/ApiResponse";
 import { useEffect } from "react";
-import { FoodCategory, FoodItemPayload } from "@/interfaces/MenuInterfaces";
-import { addCategory, addFoodItem, getCategories } from "@/services/menu";
+import { FoodCategory, FoodItem } from "@/interfaces/MenuInterfaces";
+import { addCategory, addFoodItem, getCategories, getFoodItems } from "@/services/menu";
 import { toast } from "sonner";
 
 interface FormValues {
@@ -44,6 +44,7 @@ export default function Menu() {
     useState<FoodCategory[]>(initialCategories);
   const [loadingCategory, setLoadingCategory] = useState(false);
   const [categoryError, setCategoryError] = useState<string>("");
+  const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
 
   const {
     register,
@@ -77,8 +78,25 @@ export default function Menu() {
     }
   }
 
+  async function fetchFoodItems() {
+    try {
+      const response: ApiResponse = await getFoodItems();
+      console.log(response.data);
+      if(response.success) {
+        setFoodItems(response.data);
+        console.log("Fetched Food Items:", foodItems);
+      }
+
+    }
+    catch (error: any) {
+      console.error("Failed to fetch food items:", error);
+      toast.error("Failed to fetch food items");
+    }
+  }
+
   useEffect(() => {
     fetchCategories();
+    fetchFoodItems();
   }, []);
 
   const watchNewCategory = watch("newCategory");
@@ -109,10 +127,11 @@ export default function Menu() {
       // Prepare the payload
       const selectedCategory = categories.find(cat => cat.categoryId === data.category);
       if (!selectedCategory) {
-        throw new Error("Selected category not found");
+        toast.error("Selected category not found");
+        return;
       }
 
-      const payload: FoodItemPayload = {
+      const payload: FoodItem = {
         foodName: data.title,
         price: data.price,
         category: { 
@@ -222,6 +241,12 @@ export default function Menu() {
                   className="w-full"
                 >
                   <TabsList className="flex flex-wrap h-auto gap-2 bg-muted/50 p-1">
+                  <TabsTrigger
+                      value="all-items"
+                      className="data-[state=active]:bg-background"
+                    >
+                      All Items
+                    </TabsTrigger>
                     {categories.map((category) => (
                       <TabsTrigger
                         key={category.categoryId}

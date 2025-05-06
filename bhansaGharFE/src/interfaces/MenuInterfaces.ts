@@ -3,7 +3,7 @@ export interface FoodCategory {
     categoryId: any;
 }
 
-export interface FoodItemPayload {
+export interface FoodItem {
     foodName: string;
     category: FoodCategory;
     userId: string;

@@ -147,12 +147,32 @@ class MenuController {
     // GET: Retrieve all food items for current user
     public async getFoodItems(req: Request, res: Response): Promise<Response> {
         try {
-            const foodItems = await FoodItem.find().populate('categoryId', 'categoryName').collation({ locale: 'en', strength: 2 });
-            
+            const foodItems = await FoodItem.find()
+                .populate('categoryId', ['categoryName', '_id'])
+                .collation({ locale: 'en', strength: 2 });
+    
+            const transformedFoodItems = foodItems.map(item => ({
+                foodName: item.foodName,
+                price: item.price,
+                category: {
+                    categoryId: item.categoryId._id.toString(),
+                    categoryName: (item.categoryId as any).categoryName
+                },
+                userId: item.userId.toString(),
+                description: item.description || '',
+                tags: item.tags || [],
+                isAvailable: item.isAvailable ?? true,
+                variants: item.variants?.map(variant => ({
+                    name: variant.name,
+                    additionalPrice: variant.additionalPrice,
+                    available: variant.available ?? true
+                })) || []
+            }));
+    
             return res.status(StatusCodes.OK).json(
                 new ApiResponse(
                     StatusCodes.OK,
-                    foodItems,
+                    transformedFoodItems,
                     'Food items fetched successfully'
                 )
             );
