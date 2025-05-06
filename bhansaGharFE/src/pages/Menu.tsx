@@ -155,7 +155,7 @@ export default function Menu() {
     );
 
     if (exists) {
-      setCategoryError("Category already exists!");
+      toast.error('Category already exists');
       return;
     }
 
@@ -164,7 +164,8 @@ export default function Menu() {
       // Get user from localStorage
       const userString = localStorage.getItem("user");
       if (!userString) {
-        throw new Error("User not found. Please login again.");
+        toast.error('User not found. Please login again.');
+        return;
       }
 
       const user: User = JSON.parse(userString);
@@ -176,9 +177,14 @@ export default function Menu() {
       if (!response.success) {
         switch (response.statusCode) {
           case 409:
-            setCategoryError("Category already exists!");
+            toast.error('Category already exists');
+            break;
+          default:
+            toast.error('Failed to add category');
+            break;
         }
       } else {
+        toast.success(`${response.data.categoryName} category added successfully`);
         setCategories((prev) => [
           ...prev,
           {
@@ -186,6 +192,7 @@ export default function Menu() {
             categoryName: response.data.categoryName,
           },
         ]);
+        
       }
 
       setValue("newCategory", "");
