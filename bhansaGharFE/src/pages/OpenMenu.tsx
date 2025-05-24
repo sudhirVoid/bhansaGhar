@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { FoodItemCard } from "@/components/section-cards";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { getCategories, getFoodItems } from "@/services/menu";
 import { FoodCategory, FoodItem } from "@/interfaces/MenuInterfaces";
 import { ApiResponse } from "@/interfaces/ApiResponse";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getOpenCategories, getOpenFoodItems } from "@/services/openMenu";
 
 export default function OpenMenu() {
   const { tableId } = useParams<{ tableId: string }>();
@@ -21,7 +21,7 @@ export default function OpenMenu() {
 
   async function fetchCategories() {
     try {
-      const response: ApiResponse = await getCategories();
+      const response: ApiResponse = await getOpenCategories();
       if (response.success) {
         setCategories(response.data);
       }
@@ -34,7 +34,7 @@ export default function OpenMenu() {
 
   async function fetchFoodItems() {
     try {
-      const response: ApiResponse = await getFoodItems();
+      const response: ApiResponse = await getOpenFoodItems();
       if (response.success) {
         setFoodItems(response.data);
       }
