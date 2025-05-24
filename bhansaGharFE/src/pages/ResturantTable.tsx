@@ -57,7 +57,6 @@ export default function RestaurantTable() {
     formState: { errors },
     reset,
     setValue,
-    watch,
   } = useForm<Table>({
     defaultValues: {
       id: null,

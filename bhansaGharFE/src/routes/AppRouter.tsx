@@ -7,6 +7,8 @@ import NotFound from "@/pages/NotFound";
 import PrivateRoute from "@/routes/PrivateRoute";
 import PublicRoute from "@/routes/PublicRoute";
 import ResturantTable from "@/pages/ResturantTable";
+import OpenMenu from "@/pages/OpenMenu";
+import OpenRoute from "./OpenRoute";
 
 const AppRouter: React.FC = () => {
     return (
@@ -17,6 +19,14 @@ const AppRouter: React.FC = () => {
                     <PublicRoute>
                         <Login />
                     </PublicRoute>
+                }
+            />
+            <Route
+                path="/openMenu/:tableId"
+                element={
+                    <OpenRoute>
+                        <OpenMenu />
+                    </OpenRoute>
                 }
             />
             <Route
